@@ -1,14 +1,18 @@
 const express = require('express');
 const app = express();
-const port = 3000; // You can choose any port number
+const port = 3000;
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const User = require('./Schema/UserSchema');
+
+// Enable CORS for all routes
+app.use(cors());  // This enables CORS for all requests
+
 app.use(express.json());
 
+const uri = 'mongodb+srv://shahnapshahna243:J0m4YQnDVfNfodk1@cluster0.ib81l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
-const uri = 'mongodb+srv://shahnapshahna243:J0m4YQnDVfNfodk1@cluster0.ib81l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 async function connectToMongoDB() {
     try {
       await mongoose.connect(uri, {
@@ -19,13 +23,13 @@ async function connectToMongoDB() {
     } catch (error) {
       console.error('Error connecting to MongoDB:', error);
     }
-  }
+}
   
-  connectToMongoDB();
+connectToMongoDB();
+
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
-
 
 // --------------------------Authentication------------------------------------------------------//
 
@@ -34,41 +38,34 @@ app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
   
     try {
-      
       let user = await User.findOne({ username });
       if (user) {
         return res.status(400).json({ msg: 'User already exists' });
       }
   
-  
       const newUser = new User({
         username,
         password,
-       
       });
   
-    
       await newUser.save();
-  
       res.status(200).json({ msg: 'User registered successfully' });
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server error');
     }
-  });
+});
   
-  app.post('/api/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-     
         let user = await User.findOne({ username });
 
         if (!user) {
             return res.status(404).json({ msg: 'User not found' }); 
         }
 
-      
         if (user.password !== password) {
             return res.status(401).json({ msg: 'Invalid password' });
         }
@@ -79,9 +76,6 @@ app.post('/api/register', async (req, res) => {
 
         // Successful login
         res.status(200).json({ msg: 'Logged in successfully' }); 
-
-      
-
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -90,15 +84,12 @@ app.post('/api/register', async (req, res) => {
 
 app.get('/api/users', async (req, res) => {
     try {
-        // Fetch all users from the database
-        const users = await User.find(); // This will return all users
+        const users = await User.find();
 
-        // Check if users exist
         if (users.length === 0) {
             return res.status(404).json({ msg: 'No users found' });
         }
 
-        // Respond with the list of users
         res.status(200).json(users);
     } catch (err) {
         console.error(err.message);
